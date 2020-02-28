@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+# Usage:
+#
+#     $ bin/compile <build-dir> <env-path>
+
+# Fail fast and fail hard.
+set -eo pipefail
+
+BUILD_DIR=$1
+ENV_DIR=$2
+
+ORACLE_DIR="oracle"
+
+echo "-----> Making directory ${BUILD_DIR}/${ORACLE_DIR}"
+mkdir -p ${BUILD_DIR}/${ORACLE_DIR}
+cd ${BUILD_DIR}/${ORACLE_DIR}
+
+echo "-----> Downloading and extracting oracle instant client"
+curl -L https://www.dropbox.com/s/2lyjyoyvgzile7t/instantclient-basiclite-linux.x64-18.5.0.0.0dbru.zip?dl=1 -o instantclient-basiclite-linux.x64-18.5.0.0.0.zip
+curl -L https://www.dropbox.com/s/x3ngdu5xs5cg9td/instantclient-sdk-linux.x64-18.5.0.0.0dbru.zip?dl=1 -o instantclient-sdk-linux.x64-18.5.0.0.0.zip
+unzip instantclient-basiclite-linux.x64-18.5.0.0.0.zip && rm instantclient-basiclite-linux.x64-18.5.0.0.0.zip
+unzip instantclient-sdk-linux.x64-18.5.0.0.0.zip && rm instantclient-sdk-linux.x64-18.5.0.0.0.zip
+mv instantclient{_18_5,}
+cd instantclient
+ln -s libclntsh.so.18.1 libclntsh.so
+ln -s libocci.so.18.1 libocci.so
+
+ORACLE_NETWORK_ADMIN_DIR="${BUILD_DIR}/${ORACLE_DIR}/instantclient/network/admin"
+
+if [ ! -d "$ORACLE_NETWORK_ADMIN_DIR" ]; then
+  mkdir -p ${ORACLE_NETWORK_ADMIN_DIR}
+fi
+
+TNSNAMES_FILENAME="config/tnsnames.ora"
+if [[ -f $BUILD_DIR/$TNSNAMES_FILENAME ]]; then
+  echo "-----> Symlinking ${TNSNAMES_FILENAME} to ${ORACLE_INSTANT_CLIENT_DIR}/network/admin/tnsnames.ora"
+  ln -sf $BUILD_DIR/$TNSNAMES_FILENAME ${ORACLE_NETWORK_ADMIN_DIR}/tnsnames.ora
+fi
+
+SQLNET_FILENAME="config/sqlnet.ora"
+if [[ -f $BUILD_DIR/$SQLNET_FILENAME ]]; then
+  echo "-----> Symlinking ${SQLNET_FILENAME} to ${ORACLE_INSTANT_CLIENT_DIR}/network/admin/sqlnet.ora"
+  ln -sf $BUILD_DIR/$SQLNET_FILENAME ${ORACLE_NETWORK_ADMIN_DIR}/sqlnet.ora
+fi
+
+ORACLE_HOME="${BUILD_DIR}/${ORACLE_DIR}/instantclient"
+
+echo "-----> Create profile.d script"
+if [ ! -d "$BUILD_DIR/.profile.d" ]; then
+  mkdir -p ${BUILD_DIR}/.profile.d
+fi
+
+cat <<EOF > ${BUILD_DIR}/.profile.d/oracle.sh
+  export OCI_LIB_DIR=${ORACLE_HOME}
+  export ORACLE_HOME=${ORACLE_HOME}
+  export OCI_INC_DIR=${ORACLE_HOME}/sdk/include
+  export LD_LIBRARY_PATH=${ORACLE_HOME}:\$LD_LIBRARY_PATH
+  export PATH=${ORACLE_HOME}:\$PATH
+  export TNS_ADMIN=${ORACLE_HOME}/network/admin
+EOF
+
+source ${BUILD_DIR}/.profile.d/oracle.sh
+
+
+echo "-----> Save build LD_LIBRARY_PATH to ENV_DIR"
+LD_LIBRARY_PATH_FILE="$ENV_DIR/LD_LIBRARY_PATH"
+echo $ORACLE_HOME >> $LD_LIBRARY_PATH_FILE
+
+echo "-----> Done!"
