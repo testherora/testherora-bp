@@ -31,17 +31,8 @@ if [ ! -d "$ORACLE_NETWORK_ADMIN_DIR" ]; then
   mkdir -p ${ORACLE_NETWORK_ADMIN_DIR}
 fi
 
-TNSNAMES_FILENAME="config/tnsnames.ora"
-if [[ -f $BUILD_DIR/$TNSNAMES_FILENAME ]]; then
-  echo "-----> Symlinking ${TNSNAMES_FILENAME} to ${ORACLE_INSTANT_CLIENT_DIR}/network/admin/tnsnames.ora"
-  ln -sf $BUILD_DIR/$TNSNAMES_FILENAME ${ORACLE_NETWORK_ADMIN_DIR}/tnsnames.ora
-fi
-
-SQLNET_FILENAME="config/sqlnet.ora"
-if [[ -f $BUILD_DIR/$SQLNET_FILENAME ]]; then
-  echo "-----> Symlinking ${SQLNET_FILENAME} to ${ORACLE_INSTANT_CLIENT_DIR}/network/admin/sqlnet.ora"
-  ln -sf $BUILD_DIR/$SQLNET_FILENAME ${ORACLE_NETWORK_ADMIN_DIR}/sqlnet.ora
-fi
+echo "-----> copying config files to ${ORACLE_NETWORK_ADMIN_DIR}"
+cp -rf $BUILD_DIR/config/* ${ORACLE_NETWORK_ADMIN_DIR}
 
 ORACLE_HOME="${BUILD_DIR}/${ORACLE_DIR}/instantclient"
 
