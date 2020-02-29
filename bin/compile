@@ -22,8 +22,8 @@ unzip instantclient-basiclite-linux.x64-18.5.0.0.0.zip && rm instantclient-basic
 unzip instantclient-sdk-linux.x64-18.5.0.0.0.zip && rm instantclient-sdk-linux.x64-18.5.0.0.0.zip
 mv instantclient{_18_5,}
 cd instantclient
-ln -s libclntsh.so.18.1 libclntsh.so
-ln -s libocci.so.18.1 libocci.so
+ln -sf libclntsh.so.18.1 libclntsh.so
+ln -sf libocci.so.18.1 libocci.so
 
 ORACLE_NETWORK_ADMIN_DIR="${BUILD_DIR}/${ORACLE_DIR}/instantclient/network/admin"
 
